@@ -32,3 +32,71 @@ App คุณ ทำงานได้แล้ว! ✅ แค่มี permissi
 ⚠️ แค่ permission error ตอนสร้าง .bat files
 
 การแก้ไข: ใช้วิธี direct Docker commands แทนการสร้าง .bat files จะไม่มี permission error แล้วครับ!
+
+
+
+📦 MongoDB Docker App - Installer Package Structure
+═══════════════════════════════════════════════════════════
+
+📁 SourceFiles/ (สำหรับสร้าง Installer)
+├── 📄 MongoDBDockerApp.bat              ← Main launcher (renamed)
+├── 📄 mongodb_docker_app.exe            ← Flutter executable  
+├── 📁 docker/                           ← Docker config (optional ถ้าอยากให้มีไฟล์เตรียมไว้)
+│   ├── 📄 docker-compose.yml
+│   └── 📄 init-mongo.js
+├── 📄 README.txt                        ← User instructions
+├── 📄 LICENSE.txt                       ← License information
+├── 📄 CHANGELOG.txt                     ← Version history
+└── 📄 uninstall.bat                     ← Uninstall script
+
+📁 After Installation (C:\Program Files\MongoDB Docker App\)
+├── 📄 MongoDBDockerApp.bat              ← Main launcher
+├── 📄 mongodb_docker_app.exe            ← Application
+├── 📁 docker/                           ← Created automatically
+│   ├── 📄 docker-compose.yml            ← Generated on first run
+│   └── 📄 init-mongo.js                 ← Generated on first run
+├── 📄 README.txt
+├── 📄 LICENSE.txt
+├── 📄 CHANGELOG.txt
+└── 📄 uninstall.bat
+
+═══════════════════════════════════════════════════════════
+
+🔧 INSTALLER CONFIGURATION (Inno Setup Example):
+
+[Setup]
+AppName=MongoDB Docker App
+AppVersion=1.0.0
+AppPublisher=Your Company Name
+AppPublisherURL=https://yourcompany.com
+DefaultDirName={autopf}\MongoDB Docker App
+DefaultGroupName=MongoDB Docker App
+UninstallDisplayIcon={app}\mongodb_docker_app.exe
+Compression=lzma2
+SolidCompression=yes
+ArchitecturesInstallIn64BitMode=x64
+MinVersion=0,6.1
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Files]
+Source: "SourceFiles\MongoDBDockerApp.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "SourceFiles\mongodb_docker_app.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "SourceFiles\README.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "SourceFiles\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "SourceFiles\CHANGELOG.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "SourceFiles\uninstall.bat"; DestDir: "{app}"; Flags: ignoreversion
+
+[Icons]
+Name: "{group}\MongoDB Docker App"; Filename: "{app}\MongoDBDockerApp.bat"; IconFilename: "{app}\mongodb_docker_app.exe"
+Name: "{autodesktop}\MongoDB Docker App"; Filename: "{app}\MongoDBDockerApp.bat"; IconFilename: "{app}\mongodb_docker_app.exe"; Tasks: desktopicon
+Name: "{group}\Uninstall MongoDB Docker App"; Filename: "{uninstallexe}"
+
+[Tasks]
+Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
+
+[Run]
+Filename: "{app}\MongoDBDockerApp.bat"; Description: "Launch MongoDB Docker App"; Flags: nowait postinstall skipifsilent
+
+═══════════════════════════════════════════════════════════

@@ -6,7 +6,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 
-
 class DirectDockerMongoDBManager with ChangeNotifier {
   static String? _projectRoot;
   static mongo.Db? _database;
@@ -21,7 +20,22 @@ class DirectDockerMongoDBManager with ChangeNotifier {
   static Future<String> _getProjectRoot() async {
     if (_projectRoot != null) return _projectRoot!;
     
-    _projectRoot = Directory.current.path;
+    // สำหรับ Windows build (.exe) ใช้ path ของ executable
+    String currentPath = Directory.current.path;
+    
+    // ถ้าอยู่ใน build directory ให้ขึ้นไปหา project root
+    if (currentPath.contains('build\\windows\\x64\\runner')) {
+      // ขึ้นไป 5 ระดับจาก build/windows/x64/runner/Release หรือ Debug
+      var projectDir = Directory(currentPath);
+      for (int i = 0; i < 5; i++) {
+        projectDir = projectDir.parent;
+      }
+      _projectRoot = projectDir.path;
+    } else {
+      _projectRoot = currentPath;
+    }
+    
+    print('📁 Project root: $_projectRoot');
     
     final dockerDir = Directory(path.join(_projectRoot!, 'docker'));
     if (!await dockerDir.exists()) {
@@ -161,6 +175,16 @@ print('✅ Database initialized with sample data');
   // รัน Docker commands โดยตรง
   Future<void> _runDockerCommands(String dockerPath, {required bool isStart}) async {
     try {
+      // ตรวจสอบว่า docker directory มีอยู่จริง
+      final dockerDir = Directory(dockerPath);
+      if (!await dockerDir.exists()) {
+        updateLogData('❌ Docker directory not found: $dockerPath\n');
+        await updateInstalling(false);
+        return;
+      }
+
+      updateLogData('📁 Using docker directory: $dockerPath\n');
+
       if (isStart) {
         updateLogData('📥 Pulling MongoDB image...\n');
         
@@ -293,6 +317,13 @@ print('✅ Database initialized with sample data');
       final projectRoot = await _getProjectRoot();
       final dockerPath = path.join(projectRoot, 'docker');
 
+      // ตรวจสอบว่า docker directory มีอยู่จริง
+      final dockerDir = Directory(dockerPath);
+      if (!await dockerDir.exists()) {
+        print('❌ Docker directory not found: $dockerPath');
+        return false;
+      }
+
       final result = await Process.run(
         'docker', 
         ['compose', 'ps', '--services', '--filter', 'status=running'],
@@ -301,6 +332,7 @@ print('✅ Database initialized with sample data');
 
       return result.stdout.toString().contains('mongodb');
     } catch (e) {
+      print('❌ Error checking Docker status: $e');
       return false;
     }
   }
@@ -316,7 +348,7 @@ print('✅ Database initialized with sample data');
     return _database!;
   }
 
-  static bool get dbIsRunning => _isRunning;
+  static bool get dbRunning => _isRunning;
 }
 
 // User Repository
